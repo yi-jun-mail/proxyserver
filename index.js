@@ -15,7 +15,8 @@ let echoServer = http.createServer((req, res) => {
   for (let header in req.headers) {
      res.setHeader(header, req.headers[header])
   }
-  logStream.write(JSON.stringify(req.headers)+'\n')
+  //logStream.write(JSON.stringify(req.headers)+'\n')
+  req.pipe(logStream)
   req.pipe(res)
 })
 
@@ -31,10 +32,16 @@ let proxyServer = http.createServer((req, res) => {
   }
 
   let options = {
-    url: url + req.url
+    url: url 
   }
  
-  req.pipe(request(options)).pipe(res)
+  let outboundReq = request(options)
+  req.pipe(logStream)
+  let incomingRes = req.pipe(outboundReq)
+  incomingRes.pipe(logStream)
+  incomingRes.pipe(res)
+  //req.pipe(request(options)).pipe(res)
+  //res.pipe(logStream)
 })
 
 proxyServer.listen(9000)
